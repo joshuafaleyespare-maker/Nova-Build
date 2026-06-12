@@ -1,0 +1,539 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaBuild Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #080E14;
+      --surface:  #0D1B26;
+      --card:     #122030;
+      --border:   #1A3040;
+      --border2:  #1E3A4C;
+      --teal:     #00C9C9;
+      --teal-dk:  #009E9E;
+      --teal-dim: rgba(0,201,201,0.1);
+      --navy:     #0D2030;
+      --green:    #00B87A;
+      --red:      #E05555;
+      --amber:    #F5A800;
+      --text:     #EEF4F7;
+      --muted:    #5A8090;
+      --slate:    #7A9AAA;
+    }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Sora', sans-serif; font-size: 0.9rem; line-height: 1.5;
+    }
+
+    /* -- LOGIN SCREEN -- */
+    .login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+    }
+    .login-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px; width: 360px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+    .login-logo {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
+    }
+    .login-logo-mark {
+      width: 38px; height: 38px; background: var(--teal); border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-logo-mark svg { width: 22px; height: 22px; }
+    .login-logo-name { font-size: 1.15rem; font-weight: 800; color: var(--text); }
+    .login-logo-name span { color: var(--teal); }
+    .login-badge {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+      color: var(--muted); text-transform: uppercase;
+      border: 1px solid var(--border2); padding: 3px 8px; border-radius: 4px;
+      margin-left: 4px;
+    }
+    .login-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+    .login-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 24px; }
+    .login-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .login-field label { font-size: 0.72rem; font-weight: 600; color: var(--slate); letter-spacing: 0.04em; }
+    .login-field input {
+      padding: 11px 14px; border: 1.5px solid var(--border2);
+      border-radius: 8px; font-family: 'Sora', sans-serif;
+      font-size: 0.88rem; color: var(--text); background: var(--card);
+      outline: none; transition: border-color 0.2s;
+    }
+    .login-field input:focus { border-color: var(--teal); }
+    .login-error { color: var(--red); font-size: 0.75rem; margin-bottom: 12px; display: none; }
+    .login-error.show { display: block; }
+    .btn-login {
+      width: 100%; padding: 12px; background: var(--teal); color: #fff;
+      border: none; border-radius: 8px; font-family: 'Sora', sans-serif;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-login:hover { background: var(--teal-dk); }
+
+    /* -- DASHBOARD -- */
+    .dashboard { display: none; min-height: 100vh; flex-direction: column; }
+    .dashboard.show { display: flex; }
+
+    /* Header */
+    .admin-header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 32px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+    }
+    .admin-header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo-name { font-size: 1rem; font-weight: 800; color: var(--text); }
+    .header-logo-name span { color: var(--teal); }
+    .admin-pill {
+      background: var(--teal-dim); border: 1px solid rgba(0,201,201,0.25);
+      color: var(--teal); font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.1em; padding: 3px 9px; border-radius: 100px;
+    }
+    .admin-header-right { display: flex; align-items: center; gap: 16px; }
+    .header-refresh {
+      background: none; border: 1px solid var(--border2); color: var(--slate);
+      padding: 6px 14px; border-radius: 6px; cursor: pointer;
+      font-family: 'Sora', sans-serif; font-size: 0.78rem; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .header-refresh:hover { border-color: var(--teal); color: var(--teal); }
+    .header-logout {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-family: 'Sora', sans-serif; font-size: 0.78rem; transition: color 0.2s;
+    }
+    .header-logout:hover { color: var(--red); }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    /* Main */
+    .admin-main { flex: 1; padding: 32px; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 22px;
+    }
+    .stat-label {
+      font-size: 0.65rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: 'Space Mono', monospace; font-size: 1.6rem;
+      font-weight: 700; color: var(--text); line-height: 1;
+    }
+    .stat-value.teal { color: var(--teal); }
+    .stat-sub { font-size: 0.72rem; color: var(--muted); margin-top: 5px; }
+
+    /* Orders panel */
+    .orders-panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden;
+    }
+    .orders-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+    }
+    .orders-title {
+      font-family: 'Space Mono', monospace; font-size: 0.72rem; font-weight: 700;
+      color: var(--slate); letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .orders-controls { display: flex; gap: 10px; align-items: center; }
+    .search-box {
+      padding: 8px 12px; background: var(--card); border: 1px solid var(--border2);
+      border-radius: 7px; font-family: 'Sora', sans-serif; font-size: 0.8rem;
+      color: var(--text); outline: none; width: 220px; transition: border-color 0.2s;
+    }
+    .search-box::placeholder { color: var(--muted); }
+    .search-box:focus { border-color: var(--teal); }
+    .filter-select {
+      padding: 8px 12px; background: var(--card); border: 1px solid var(--border2);
+      border-radius: 7px; font-family: 'Sora', sans-serif; font-size: 0.8rem;
+      color: var(--text); outline: none; cursor: pointer;
+    }
+
+    /* Table */
+    .orders-table { width: 100%; border-collapse: collapse; }
+    .orders-table th {
+      font-family: 'Space Mono', monospace; font-size: 0.62rem; font-weight: 700;
+      color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+      text-align: left; padding: 12px 16px;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .orders-table td {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .orders-table tr:last-child td { border-bottom: none; }
+    .orders-table tbody tr { transition: background 0.15s; cursor: pointer; }
+    .orders-table tbody tr:hover { background: rgba(0,201,201,0.03); }
+
+    .order-num { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--teal); font-weight: 700; }
+    .order-date { font-size: 0.78rem; color: var(--slate); white-space: nowrap; }
+    .order-time { font-size: 0.68rem; color: var(--muted); }
+    .customer-name { font-weight: 600; font-size: 0.84rem; }
+    .customer-email { font-size: 0.72rem; color: var(--muted); }
+    .items-list { font-size: 0.78rem; color: var(--slate); }
+    .items-list .item-row { margin-bottom: 2px; }
+    .order-amount { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; white-space: nowrap; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+      padding: 4px 9px; border-radius: 100px;
+    }
+    .status-badge.succeeded { background: rgba(0,184,122,0.12); color: var(--green); }
+    .status-badge.pending   { background: rgba(245,168,0,0.12);  color: var(--amber); }
+    .status-badge.failed    { background: rgba(224,85,85,0.12);  color: var(--red); }
+
+    /* Expanded row */
+    .order-detail-row { display: none; }
+    .order-detail-row.open { display: table-row; }
+    .order-detail-cell {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .detail-section-title {
+      font-size: 0.65rem; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .detail-val { font-size: 0.82rem; color: var(--text); font-weight: 300; line-height: 1.6; }
+    .detail-val strong { font-weight: 600; }
+
+    /* Empty / loading */
+    .table-state {
+      text-align: center; padding: 60px 24px; color: var(--muted);
+    }
+    .table-state .state-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .table-state p { font-size: 0.85rem; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .admin-main { padding: 16px; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="Logo Square.png" alt="NovaBuild" style="height:52px;width:auto;display:block;margin-bottom:4px;"><span class="login-badge" style="margin-left:0">Admin</span>
+    </div>
+    <div class="login-title">Sign in to dashboard</div>
+    <div class="login-sub">Enter your admin password to continue.</div>
+    <div class="login-field">
+      <label>Admin password</label>
+      <input type="password" id="pw-input" placeholder="••••••••••"
+        onkeydown="if(event.key==='Enter')login()" />
+    </div>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+    <button class="btn-login" onclick="login()">Sign In →</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <img src="Logo Rectangle.png" alt="NovaBuild Robotics" style="height:58px;width:auto;display:block;">
+      <span class="admin-pill">ADMIN</span>
+      <div class="live-dot" title="Live data"></div>
+    </div>
+    <div class="admin-header-right">
+      <button class="header-refresh" onclick="loadOrders()">↻ Refresh</button>
+      <a href="index.html" style="font-size:0.78rem;color:var(--muted);text-decoration:none">← Store</a>
+      <button class="header-logout" onclick="logout()">Log out</button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="admin-main">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value teal" id="stat-revenue">—</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value" id="stat-count">—</div>
+        <div class="stat-sub">Successful payments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revenue Today</div>
+        <div class="stat-value" id="stat-today">—</div>
+        <div class="stat-sub">Last 24 hours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Average Order</div>
+        <div class="stat-value" id="stat-avg">—</div>
+        <div class="stat-sub">Per transaction</div>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="orders-panel">
+      <div class="orders-header">
+        <span class="orders-title">Orders</span>
+        <div class="orders-controls">
+          <input class="search-box" id="search-box" placeholder="Search name, email…"
+            oninput="filterOrders()" />
+          <select class="filter-select" id="sort-select" onchange="filterOrders()">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="highest">Highest amount</option>
+            <option value="lowest">Lowest amount</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="table-wrap">
+        <div class="table-state">
+          <div class="state-icon">⏳</div>
+          <p>Loading orders…</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+let adminPassword = '';
+let allOrders = [];
+let openRow = null;
+
+/* -- Login -- */
+function login() {
+  const pw = document.getElementById('pw-input').value;
+  if (!pw) return;
+  adminPassword = pw;
+  loadOrders();
+}
+
+function logout() {
+  adminPassword = '';
+  allOrders = [];
+  document.getElementById('pw-input').value = '';
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').classList.remove('show');
+}
+
+/* -- Fetch orders -- */
+async function loadOrders() {
+  document.getElementById('table-wrap').innerHTML = `
+    <div class="table-state"><div class="state-icon">⏳</div><p>Loading orders…</p></div>`;
+
+  try {
+    const res = await fetch('/api/orders', {
+      headers: { 'x-admin-password': adminPassword }
+    });
+
+    if (res.status === 401) {
+      document.getElementById('login-error').classList.add('show');
+      return;
+    }
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    /* Auth passed - show dashboard */
+    document.getElementById('login-error').classList.remove('show');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('show');
+
+    allOrders = data.orders;
+    renderStats(data.stats);
+    filterOrders();
+
+  } catch (err) {
+    document.getElementById('table-wrap').innerHTML = `
+      <div class="table-state">
+        <div class="state-icon">⚠️</div>
+        <p>Error loading orders: ${err.message}</p>
+      </div>`;
+  }
+}
+
+/* -- Stats -- */
+function renderStats(s) {
+  document.getElementById('stat-revenue').textContent = `$${s.total.toFixed(2)}`;
+  document.getElementById('stat-count').textContent   = s.count;
+  document.getElementById('stat-today').textContent   = `$${s.today.toFixed(2)}`;
+  document.getElementById('stat-avg').textContent     = `$${s.avg.toFixed(2)}`;
+}
+
+/* -- Filter / sort -- */
+function filterOrders() {
+  const q    = document.getElementById('search-box').value.toLowerCase();
+  const sort = document.getElementById('sort-select').value;
+
+  let list = allOrders.filter(o =>
+    o.customer.name.toLowerCase().includes(q) ||
+    o.customer.email.toLowerCase().includes(q) ||
+    o.shipping.toLowerCase().includes(q)
+  );
+
+  list.sort((a, b) => {
+    if (sort === 'newest')  return b.date - a.date;
+    if (sort === 'oldest')  return a.date - b.date;
+    if (sort === 'highest') return b.amount - a.amount;
+    if (sort === 'lowest')  return a.amount - b.amount;
+    return 0;
+  });
+
+  renderTable(list);
+}
+
+/* -- Table -- */
+function renderTable(orders) {
+  if (!orders.length) {
+    document.getElementById('table-wrap').innerHTML = `
+      <div class="table-state">
+        <div class="state-icon">📭</div>
+        <p>No orders found.</p>
+      </div>`;
+    return;
+  }
+
+  const rows = orders.map((o, i) => {
+    const d   = new Date(o.date * 1000);
+    const dateStr = d.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+    const orderId = 'NB-' + o.id.slice(-6).toUpperCase();
+
+    const itemsHtml = o.items.length
+      ? o.items.map(it => `
+          <div class="item-row">
+            <span style="color:var(--text);font-weight:600">${esc(it.name || it.id)}</span>
+            <span style="color:var(--muted)"> × ${it.qty}</span>
+            ${it.price ? `<span style="color:var(--teal);font-family:'Space Mono',monospace;font-size:0.7rem;margin-left:4px">$${(it.price * it.qty).toFixed(2)}</span>` : ''}
+          </div>`).join('')
+      : `<span style="color:var(--muted);font-size:0.75rem">No item data<br><span style="font-size:0.68rem">(pre-dates tracking)</span></span>`;
+
+    const itemsDetailHtml = o.items.length
+      ? `<table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+          <tr style="color:var(--muted);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em">
+            <td style="padding:4px 0">Product</td>
+            <td style="padding:4px 0;text-align:center">Qty</td>
+            <td style="padding:4px 0;text-align:right">Unit</td>
+            <td style="padding:4px 0;text-align:right">Total</td>
+          </tr>
+          ${o.items.map(it => `
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:8px 0;font-weight:600">${esc(it.name || it.id)}</td>
+              <td style="padding:8px 0;text-align:center;color:var(--slate)">×${it.qty}</td>
+              <td style="padding:8px 0;text-align:right;font-family:'Space Mono',monospace;color:var(--slate)">$${it.price ? it.price.toFixed(2) : '—'}</td>
+              <td style="padding:8px 0;text-align:right;font-family:'Space Mono',monospace;color:var(--teal);font-weight:700">$${it.price ? (it.price * it.qty).toFixed(2) : '—'}</td>
+            </tr>`).join('')}
+          <tr style="border-top:2px solid var(--border2)">
+            <td colspan="3" style="padding:8px 0;font-weight:700">Total</td>
+            <td style="padding:8px 0;text-align:right;font-family:'Space Mono',monospace;font-weight:700;font-size:0.95rem">${o.currency} $${o.amount.toFixed(2)}</td>
+          </tr>
+        </table>`
+      : `<span style="color:var(--muted);font-size:0.8rem">No item breakdown available for this order.</span>`;
+
+    return `
+      <tr onclick="toggleDetail(${i})" id="row-${i}">
+        <td><div class="order-num">${orderId}</div></td>
+        <td><div class="order-date">${dateStr}</div><div class="order-time">${timeStr}</div></td>
+        <td>
+          <div class="customer-name">${esc(o.customer.name)}</div>
+          <div class="customer-email">${esc(o.customer.email)}</div>
+        </td>
+        <td><div class="items-list">${itemsHtml}</div></td>
+        <td><div class="order-amount">${o.currency} $${o.amount.toFixed(2)}</div></td>
+        <td><span class="status-badge succeeded">✓ Paid</span></td>
+      </tr>
+      <tr class="order-detail-row" id="detail-${i}">
+        <td class="order-detail-cell" colspan="6">
+          <div class="detail-grid">
+            <div>
+              <div class="detail-section-title">Customer Contact</div>
+              <div class="detail-val">
+                <strong>${esc(o.customer.name)}</strong><br>
+                <a href="mailto:${esc(o.customer.email)}" style="color:var(--teal);text-decoration:none">${esc(o.customer.email)}</a>
+              </div>
+            </div>
+            <div>
+              <div class="detail-section-title">Shipping Address</div>
+              <div class="detail-val" style="line-height:1.8">${esc(o.shipping) || '<span style="color:var(--muted)">—</span>'}</div>
+            </div>
+            <div>
+              <div class="detail-section-title">Payment</div>
+              <div class="detail-val">
+                <span style="font-family:\'Space Mono\',monospace;font-size:1.05rem;font-weight:700">${o.currency} $${o.amount.toFixed(2)}</span><br>
+                <span style="color:var(--green);font-size:0.75rem;font-weight:600">✓ Confirmed · ${dateStr} ${timeStr}</span>
+              </div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div class="detail-section-title">Items Ordered</div>
+              <div class="detail-val">${itemsDetailHtml}</div>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th>Order</th><th>Date</th><th>Customer</th>
+          <th>Items</th><th>Amount</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function toggleDetail(i) {
+  const detail = document.getElementById('detail-' + i);
+  if (openRow !== null && openRow !== i) {
+    document.getElementById('detail-' + openRow).classList.remove('open');
+  }
+  const isOpen = detail.classList.toggle('open');
+  openRow = isOpen ? i : null;
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* Focus password field on load */
+window.addEventListener('load', () => {
+  document.getElementById('pw-input').focus();
+});
+</script>
+</body>
+</html>
+
