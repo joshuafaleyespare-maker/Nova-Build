@@ -153,8 +153,8 @@
     .related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .related-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; text-decoration: none; color: var(--navy); transition: box-shadow 0.2s; display: block; }
     .related-card:hover { box-shadow: 0 6px 24px rgba(13,32,48,0.10); }
-    .related-img { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: var(--teal-light); overflow: hidden; }
-    .related-img img { width: 100%; height: 100%; object-fit: contain; padding: 12px; }
+    .related-img { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: var(--white); overflow: hidden; border-bottom: 1px solid var(--border); }
+    .related-img img { width: 100%; height: 100%; object-fit: contain; padding: 16px; }
     .related-body { padding: 12px 16px; }
     .related-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
     .related-price { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--turquoise); font-weight: 700; }
@@ -256,16 +256,15 @@ if (!p) {
     : '';
 
   const relatedHTML = Object.values(PRODUCTS)
-    .filter(r => r.id !== id)
+    .filter(r => r.id !== id && PRODUCT_DETAILS?.[r.id]?.image)
     .slice(0, 3)
     .map(r => {
-      const ri = PRODUCT_DETAILS?.[r.id]?.image;
-      const thumb = ri
-        ? `<img src="${encodeURI(ri)}" alt="${r.name}">`
-        : r.emoji;
+      const ri = PRODUCT_DETAILS[r.id].image;
       return `
         <a href="product.html?id=${r.id}" class="related-card">
-          <div class="related-img">${thumb}</div>
+          <div class="related-img">
+            <img src="${encodeURI(ri)}" alt="${r.name}">
+          </div>
           <div class="related-body">
             <div class="related-name">${r.name}</div>
             <div class="related-price">AUD $${r.price.toFixed(2)}</div>
