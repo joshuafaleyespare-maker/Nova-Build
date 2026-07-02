@@ -313,7 +313,7 @@ const CartUI = {
       const p = PRODUCTS[id]; if (!p) return '';
       return `
         <div class="c-item">
-          <div class="c-thumb">${PRODUCT_DETAILS?.[id]?.image ? `<img src="${PRODUCT_DETAILS[id].image}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">` : p.emoji}</div>
+          <div class="c-thumb">${PRODUCT_DETAILS?.[id]?.image ? `<img src="${encodeURI(PRODUCT_DETAILS[id].image)}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">` : p.emoji}</div>
           <div>
             <div class="c-name">${p.name}</div>
             <div class="c-variant">${p.variant}</div>
@@ -340,7 +340,7 @@ const CartUI = {
           <div class="cart-upsell-title">Customers who bought this also added:</div>
           ${sugg.map(p => `
             <div class="c-upsell-item">
-              <span class="c-upsell-emoji">${p.emoji}</span>
+              <span class="c-upsell-emoji">${PRODUCT_DETAILS?.[p.id]?.image ? `<img src="${encodeURI(PRODUCT_DETAILS[p.id].image)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px" alt="${p.name}">` : p.emoji}</span>
               <span class="c-upsell-name">${p.name}</span>
               <span class="c-upsell-price">$${p.price.toFixed(2)}</span>
               <button class="c-upsell-add" onclick="Cart.add('${p.id}',1);CartUI.showToast('${p.name} added to cart')">+ ADD</button>

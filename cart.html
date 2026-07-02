@@ -374,7 +374,7 @@ function renderCartPage() {
             const p = PRODUCTS[id]; if (!p) return '';
             return `
               <div class="cart-line" id="line-${id}">
-                <div class="cart-line-thumb">${PRODUCT_DETAILS?.[id]?.image ? `<img src="${PRODUCT_DETAILS[id].image}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">` : p.emoji}</div>
+                <div class="cart-line-thumb">${PRODUCT_DETAILS?.[id]?.image ? `<img src="${encodeURI(PRODUCT_DETAILS[id].image)}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">` : p.emoji}</div>
                 <div>
                   <div class="cart-line-name">${p.name}</div>
                   <div class="cart-line-desc">${p.variant} · Ages ${p.ages}</div>
@@ -405,7 +405,7 @@ function renderCartPage() {
             <div class="upsell-scroll">
               ${upsells.map(p => `
                 <div class="upsell-card">
-                  <div class="upsell-card-thumb">${p.emoji}</div>
+                  <div class="upsell-card-thumb">${PRODUCT_DETAILS?.[p.id]?.image ? `<img src="${encodeURI(PRODUCT_DETAILS[p.id].image)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" alt="${p.name}">` : p.emoji}</div>
                   <div class="upsell-card-name">${p.name}</div>
                   <div class="upsell-card-price">AUD $${p.price.toFixed(2)}</div>
                   <button class="upsell-card-add" onclick="Cart.add('${p.id}',1);CartUI.showToast('${p.name} added');renderCartPage()">+ ADD TO CART</button>

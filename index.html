@@ -1507,7 +1507,7 @@ function renderProductGrid() {
         <div class="pcard-image${pd?.image ? ' has-photo' : ''}${id === 'sol25' ? ' portrait' : ''}" style="background:${pd?.image ? '#fff' : (pd?.color||'#E0FAFA')}">
           ${!pd?.image ? '<div class="pcard-image-circles"></div>' : ''}
           ${pd?.image
-            ? `<img src="${pd.image}" alt="${p.name}" class="pcard-img-photo"${i > 0 ? ' loading="lazy"' : ''}
+            ? `<img src="${encodeURI(pd.image)}" alt="${p.name}" class="pcard-img-photo"${i > 0 ? ' loading="lazy"' : ''}
                 onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`
             : ''}
           <div class="pcard-emoji" style="animation-delay:-${i*0.4}s;${pd?.image?'display:none':''}">${p.emoji}</div>
