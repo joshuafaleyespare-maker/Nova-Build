@@ -3,7 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NovaBuild</title>
+  <title>NovaBuild — Robot &amp; STEM Kits for Kids</title>
+  <meta name="description" content="Shop NovaBuild robot and STEM building kits for kids aged 8–16. 50% off sitewide, free Australian shipping on orders over $99." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://novabuild.com/product.html" />
+  <meta property="og:type" content="product" />
+  <meta property="og:site_name" content="NovaBuild" />
+  <meta property="og:title" content="NovaBuild — Robot &amp; STEM Kits for Kids" />
+  <meta property="og:description" content="Shop NovaBuild robot and STEM building kits for kids aged 8–16. 50% off sitewide, free Australian shipping on orders over $99." />
+  <meta property="og:url" content="https://novabuild.com/product.html" />
+  <meta property="og:image" content="https://novabuild.com/Kid%20photo.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NovaBuild — Robot &amp; STEM Kits for Kids" />
+  <meta name="twitter:description" content="Shop NovaBuild robot and STEM building kits for kids aged 8–16. 50% off sitewide, free Australian shipping on orders over $99." />
+  <meta name="twitter:image" content="https://novabuild.com/Kid%20photo.webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -434,6 +447,38 @@ if (!p || !pd) {
     </div>`;
 } else {
   document.title = `${p.name} — NovaBuild`;
+
+  const _sm = (sel, attr, val) => { const el = document.querySelector(sel); if (el) el.setAttribute(attr, val); };
+  const _pdesc = `${pd.description || p.variant} AUD $${p.price.toFixed(2)} — ${savings}% off RRP. Free Australian shipping on orders over $99.`;
+  const _purl  = `https://novabuild.com/product.html?id=${id}`;
+  const _pimg  = pd.image && !pd.image.startsWith('http') ? `https://novabuild.com/${encodeURIComponent(pd.image).replace(/%2F/g,'/')}` : '';
+  _sm('meta[name="description"]',       'content', _pdesc);
+  _sm('link[rel="canonical"]',          'href',    _purl);
+  _sm('meta[property="og:title"]',      'content', `${p.name} — NovaBuild`);
+  _sm('meta[property="og:description"]','content', _pdesc);
+  _sm('meta[property="og:url"]',        'content', _purl);
+  if (_pimg) { _sm('meta[property="og:image"]', 'content', _pimg); _sm('meta[name="twitter:image"]', 'content', _pimg); }
+  _sm('meta[name="twitter:title"]',       'content', `${p.name} — NovaBuild`);
+  _sm('meta[name="twitter:description"]', 'content', _pdesc);
+  const _ld = document.createElement('script');
+  _ld.type = 'application/ld+json';
+  _ld.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": p.name,
+    "description": pd.description || p.variant,
+    "image": _pimg,
+    "brand": { "@type": "Brand", "name": "NovaBuild" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "AUD",
+      "price": p.price.toFixed(2),
+      "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "url": _purl,
+      "seller": { "@type": "Organization", "name": "NovaBuild" }
+    }
+  });
+  document.head.appendChild(_ld);
 
   const relatedProducts = Object.values(PRODUCTS).filter(r => r.id !== id).slice(0, 3);
   const savings = Math.round((1 - p.price / p.was) * 100);
