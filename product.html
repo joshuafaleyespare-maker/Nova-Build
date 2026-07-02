@@ -308,7 +308,7 @@ if (!p) {
 
         ${isLowStock ? `<div class="stock-badge"><span class="low-dot"></span>Only ${p.stock} left in stock</div>` : ''}
 
-        <button class="btn-add" onclick="Cart.add('${id}');CartUI.openDrawer();CartUI.showToast('${p.name} added to cart')">
+        <button class="btn-add" onclick="Cart.add('${id}');CartUI.renderDrawer();CartUI.openDrawer();CartUI.showToast('${p.name} added to cart')">
           ADD TO CART
         </button>
         <a href="cart.html" class="btn-cart">VIEW CART</a>
@@ -334,6 +334,9 @@ function switchImg(src, el) {
   document.querySelectorAll('.product-thumb').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 }
+
+CartUI.renderDrawer();
+CartUI.updateBadge();
 </script>
 </body>
 </html>
