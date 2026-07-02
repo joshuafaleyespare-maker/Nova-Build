@@ -174,9 +174,10 @@
 <div id="cart-drawer" class="cart-drawer" role="dialog" aria-label="Shopping cart">
   <div class="cart-drawer-head">
     <span class="cart-drawer-title">Your Cart</span>
-    <button class="cart-close-btn" onclick="CartUI.closeDrawer()">×</button>
+    <button id="cart-close-btn" class="cart-close-btn" onclick="CartUI.closeDrawer()">×</button>
   </div>
   <div id="cart-scroll" class="cart-scroll"></div>
+  <div id="cart-upsell" class="cart-upsell" style="display:none"></div>
   <div id="cart-summary-section" class="cart-summary-section"></div>
   <div id="cart-cta-section" class="cart-cta-section" style="display:none">
     <a href="checkout.html" class="btn-checkout">CHECKOUT →</a>
@@ -192,7 +193,7 @@
   </a>
   <div class="nav-right">
     <a href="index.html#products" class="nav-link">All Kits</a>
-    <button id="nav-cart-btn" class="nav-cart-btn" onclick="CartUI.openDrawer()" aria-label="Cart">
+    <button id="nav-cart-btn" class="nav-cart-btn" onclick="CartUI.renderDrawer();CartUI.openDrawer()" aria-label="Cart">
       <svg width="22" height="20" viewBox="0 0 22 20" fill="none">
         <path d="M1 1h3l2.4 9H17l2.6-6.5H6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="9" cy="18" r="1.5" fill="currentColor"/>
