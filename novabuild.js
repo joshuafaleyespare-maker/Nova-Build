@@ -313,7 +313,7 @@ const CartUI = {
       const p = PRODUCTS[id]; if (!p) return '';
       return `
         <div class="c-item">
-          <div class="c-thumb">${p.emoji}</div>
+          <div class="c-thumb">${PRODUCT_DETAILS?.[id]?.image ? `<img src="${PRODUCT_DETAILS[id].image}" style="width:100%;height:100%;object-fit:cover" alt="${p.name}">` : p.emoji}</div>
           <div>
             <div class="c-name">${p.name}</div>
             <div class="c-variant">${p.variant}</div>
