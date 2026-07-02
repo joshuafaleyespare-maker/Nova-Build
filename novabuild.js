@@ -20,6 +20,13 @@ const PRODUCTS = {
   codingj:   { id:'codingj',   name:'CodingBot J',              price:69.99, was:140, emoji:'💻', variant:'Coding · 6-in-1 Robot',       ages:'8–12', stock:11 },
 };
 
+/* --- Apply admin overrides from products-config.js if loaded --- */
+if (typeof PRODUCT_OVERRIDES !== 'undefined' && PRODUCT_OVERRIDES) {
+  Object.entries(PRODUCT_OVERRIDES).forEach(([id, ov]) => {
+    if (PRODUCTS[id]) Object.assign(PRODUCTS[id], ov);
+  });
+}
+
 /* --- Extended product details (used by product.html) --- */
 const PRODUCT_DETAILS = {
   solarbot: {
