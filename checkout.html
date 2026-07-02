@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout — NovaBuild</title>
   <meta name="robots" content="noindex, nofollow" />
+  <script src="https://js.stripe.com/v3/"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -14,9 +15,10 @@
       --white: #fff; --off-white: #F5F9FA; --teal-light: #E0FAFA;
       --teal-mid: #B8ECEC; --turquoise: #00C9C9; --turquoise-dk: #009E9E;
       --navy: #0D2030; --slate: #4A6B7A; --slate-light: #7A9AAA;
-      --green: #00B87A; --border: #D4EEF0;
+      --red: #E05555; --green: #00B87A; --border: #D4EEF0; --border2: #C0E4E6;
       --shadow-sm: 0 2px 8px rgba(13,32,48,0.06);
     }
+    html { scroll-behavior: smooth; }
     body { background: var(--off-white); color: var(--navy); font-family: 'Sora', sans-serif; line-height: 1.6; min-height: 100vh; }
     nav {
       display: flex; align-items: center; justify-content: center;
@@ -26,55 +28,225 @@
     }
     .logo img { height: 52px; width: auto; display: block; }
 
-    .page { max-width: 680px; margin: 0 auto; padding: 40px 5% 80px; }
+    .progress-bar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 14px 5%; display: flex; justify-content: center;
+    }
+    .progress-steps { display: flex; align-items: center; gap: 0; max-width: 500px; width: 100%; }
+    .p-step {
+      display: flex; align-items: center; gap: 8px; flex: 1;
+      font-size: 0.75rem; font-weight: 600; color: var(--slate-light);
+      text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+    }
+    .p-step.active { color: var(--turquoise); }
+    .p-step.done { color: var(--green); }
+    .p-step-num {
+      width: 24px; height: 24px; border-radius: 50%; border: 2px solid currentColor;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+    }
+    .p-step.active .p-step-num { background: var(--turquoise); color: #fff; border-color: var(--turquoise); }
+    .p-step.done .p-step-num { background: var(--green); color: #fff; border-color: var(--green); }
+    .p-connector { flex: 1; height: 2px; background: var(--border); margin: 0 8px; min-width: 20px; }
+    .p-connector.done { background: var(--green); }
 
-    h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
-    .subtitle { color: var(--slate); font-weight: 300; margin-bottom: 32px; font-size: 0.9rem; }
+    .checkout-layout {
+      display: grid; grid-template-columns: 1fr 360px;
+      gap: 32px; max-width: 1100px; margin: 0 auto; padding: 36px 5% 80px;
+      align-items: start;
+    }
 
-    .cart-item {
+    .form-panel { background: var(--white); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    .form-section-title {
+      font-size: 0.72rem; font-weight: 700; color: var(--slate);
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 22px 28px 0; margin-bottom: 18px;
+    }
+    .form-grid { padding: 0 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+    .form-row { display: grid; gap: 14px; }
+    .form-row.two { grid-template-columns: 1fr 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr 120px; }
+
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field label { font-size: 0.72rem; font-weight: 600; color: var(--slate); letter-spacing: 0.04em; }
+    .form-field input, .form-field select {
+      padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 0.88rem; font-family: 'Sora', sans-serif;
+      color: var(--navy); background: var(--white); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none; -webkit-appearance: none;
+    }
+    .form-field input:focus, .form-field select:focus {
+      border-color: var(--turquoise); box-shadow: 0 0 0 3px rgba(0,201,201,0.12);
+    }
+    .form-field input.error, .form-field select.error { border-color: var(--red); }
+    .field-error { font-size: 0.7rem; color: var(--red); font-weight: 500; display: none; }
+    .field-error.show { display: block; }
+    .form-check { display: flex; align-items: flex-start; gap: 10px; font-size: 0.82rem; color: var(--slate); font-weight: 300; }
+    .form-check input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; accent-color: var(--turquoise); cursor: pointer; }
+
+    .shipping-methods { display: flex; flex-direction: column; gap: 10px; padding: 0 28px 28px; }
+    .shipping-opt {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border: 1.5px solid var(--border);
+      border-radius: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .shipping-opt:hover { border-color: var(--teal-mid); background: var(--off-white); }
+    .shipping-opt.selected { border-color: var(--turquoise); background: rgba(0,201,201,0.04); }
+    .shipping-opt input[type="radio"] { accent-color: var(--turquoise); flex-shrink: 0; }
+    .ship-label { flex: 1; }
+    .ship-name { font-weight: 600; font-size: 0.88rem; }
+    .ship-days { font-size: 0.75rem; color: var(--slate); font-weight: 300; }
+    .ship-price { font-family: 'Space Mono', monospace; font-size: 0.88rem; font-weight: 700; }
+    .ship-price.free { color: var(--green); }
+
+    .form-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+    #payment-element { margin: 20px 28px 0; }
+    .stripe-loading {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding: 32px; color: var(--slate); font-size: 0.85rem;
+    }
+    .stripe-spinner {
+      width: 18px; height: 18px; border: 2px solid var(--border);
+      border-top-color: var(--turquoise); border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .security-note {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: var(--off-white); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; margin: 16px 28px 0;
+      font-size: 0.78rem; color: var(--slate); font-weight: 300; line-height: 1.5;
+    }
+
+    .error-bar {
+      display: none; background: #FFF0F0; border: 1px solid var(--red);
+      border-radius: 8px; padding: 12px 16px; margin: 16px 28px 0;
+      font-size: 0.82rem; color: var(--red); font-weight: 500;
+      align-items: center; gap: 8px;
+    }
+    .error-bar.show { display: flex; }
+
+    .step-ctas { padding: 20px 28px 28px; border-top: 1px solid var(--border); }
+    .btn-step {
+      display: block; width: 100%; text-align: center;
+      background: var(--turquoise); color: #fff;
+      padding: 14px; border-radius: 9px; font-weight: 700; font-size: 0.95rem;
+      border: none; cursor: pointer; font-family: 'Sora', sans-serif;
+      transition: background 0.2s; margin-bottom: 10px;
+    }
+    .btn-step:hover { background: var(--turquoise-dk); }
+    .btn-step:disabled { background: var(--slate-light); cursor: not-allowed; }
+    .btn-back {
+      display: block; text-align: center; background: none; border: none;
+      color: var(--slate); font-size: 0.82rem; font-weight: 500;
+      font-family: 'Sora', sans-serif; cursor: pointer;
+      text-decoration: underline; width: 100%;
+    }
+    .btn-back:hover { color: var(--navy); }
+    .step-legal { font-size: 0.72rem; color: var(--slate-light); text-align: center; font-weight: 300; margin-top: 10px; }
+
+    /* Confirmation */
+    .confirm-body { padding: 48px 28px; text-align: center; }
+    .confirm-check {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--teal-light); border: 3px solid var(--turquoise);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 2rem;
+    }
+    .confirm-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+    .confirm-sub { color: var(--slate); font-weight: 300; margin-bottom: 32px; }
+    .confirm-order-block {
+      background: var(--off-white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px; text-align: left; margin-bottom: 24px;
+    }
+    .confirm-order-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: 'Space Mono', monospace; font-size: 0.72rem;
+      color: var(--slate); margin-bottom: 14px; flex-wrap: wrap; gap: 6px;
+    }
+    .confirm-order-num { font-weight: 700; color: var(--navy); }
+    .confirm-line {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem;
+    }
+    .confirm-line:last-of-type { border-bottom: none; }
+    .confirm-line .cl-name { font-weight: 600; }
+    .confirm-line .cl-qty { color: var(--slate); font-size: 0.78rem; }
+    .confirm-line .cl-price { font-family: 'Space Mono', monospace; font-weight: 600; }
+    .confirm-summary { margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--border); }
+    .confirm-summary-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 5px; }
+    .confirm-summary-row .cr-lbl { color: var(--slate); }
+    .confirm-summary-row .cr-val { font-family: 'Space Mono', monospace; font-weight: 600; }
+    .confirm-summary-row .cr-val.free { color: var(--green); }
+    .confirm-total { display: flex; justify-content: space-between; margin-top: 8px; }
+    .confirm-total-lbl { font-weight: 700; }
+    .confirm-total-val { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1rem; }
+    .confirm-address { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--slate); font-weight: 300; }
+    .confirm-address strong { color: var(--navy); font-weight: 600; }
+    .what-next { background: var(--off-white); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; text-align: left; margin-bottom: 24px; }
+    .what-next h4 { font-size: 0.72rem; font-weight: 700; color: var(--slate); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+    .next-step { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+    .next-step:last-child { border-bottom: none; }
+    .next-step .ns-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .next-step .ns-text { color: var(--slate); font-weight: 300; }
+    .next-step .ns-text strong { color: var(--navy); font-weight: 600; }
+    .confirm-ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .confirm-cta-primary {
+      background: var(--turquoise); color: #fff; padding: 12px 24px;
+      border-radius: 9px; font-weight: 700; font-size: 0.9rem;
+      text-decoration: none; transition: background 0.2s; display: inline-block;
+    }
+    .confirm-cta-primary:hover { background: var(--turquoise-dk); }
+
+    /* Sidebar */
+    .summary-sidebar {
       background: var(--white); border: 1px solid var(--border);
-      border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;
-      display: flex; align-items: center; gap: 18px;
+      border-radius: 14px; padding: 24px; position: sticky; top: 24px;
     }
-    .item-thumb {
-      width: 56px; height: 56px; border-radius: 10px;
+    .sidebar-title {
+      font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700;
+      color: var(--slate); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 18px;
+    }
+    .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .sidebar-item:last-of-type { border-bottom: none; }
+    .sidebar-thumb {
+      width: 40px; height: 40px; border-radius: 7px;
       background: var(--teal-light); display: flex; align-items: center;
-      justify-content: center; font-size: 1.6rem; flex-shrink: 0;
-      overflow: hidden;
+      justify-content: center; font-size: 1.2rem; flex-shrink: 0; overflow: hidden;
     }
-    .item-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .item-info { flex: 1; }
-    .item-name { font-weight: 700; font-size: 0.95rem; }
-    .item-qty { font-size: 0.78rem; color: var(--slate); font-weight: 300; margin-top: 2px; }
-    .item-price { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
-    .btn-pay {
-      display: inline-block; background: var(--turquoise); color: #fff;
-      padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;
-      text-decoration: none; transition: background 0.2s; white-space: nowrap; flex-shrink: 0;
+    .sidebar-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .sidebar-name { font-size: 0.8rem; font-weight: 600; flex: 1; }
+    .sidebar-qty { font-size: 0.72rem; color: var(--slate); font-weight: 300; }
+    .sidebar-price { font-family: 'Space Mono', monospace; font-size: 0.82rem; font-weight: 700; }
+    .sidebar-row { display: flex; justify-content: space-between; margin-top: 12px; font-size: 0.83rem; }
+    .sidebar-row .s-lbl { color: var(--slate); font-weight: 300; }
+    .sidebar-row .s-val { font-weight: 600; font-family: 'Space Mono', monospace; }
+    .sidebar-row .s-val.free { color: var(--green); }
+    .sidebar-divider { height: 1px; background: var(--border); margin: 12px 0; }
+    .sidebar-total { display: flex; justify-content: space-between; align-items: baseline; }
+    .sidebar-total-lbl { font-weight: 700; }
+    .sidebar-total-val { font-family: 'Space Mono', monospace; font-size: 1.05rem; font-weight: 700; }
+
+    .mobile-summary-toggle {
+      display: none; background: var(--teal-light); border: 1px solid var(--teal-mid);
+      border-radius: 10px; padding: 14px 18px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; color: var(--navy);
+      align-items: center; justify-content: space-between; margin-bottom: 16px; width: 100%;
     }
-    .btn-pay:hover { background: var(--turquoise-dk); }
-    .btn-pay-unavailable {
-      display: inline-block; background: #eee; color: var(--slate);
-      padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;
-      white-space: nowrap; flex-shrink: 0; cursor: not-allowed;
-    }
+    .mobile-summary-toggle .toggle-price { font-family: 'Space Mono', monospace; }
 
-    .empty { text-align: center; padding: 60px 0; color: var(--slate); }
-    .empty a { color: var(--turquoise); text-decoration: none; font-weight: 600; }
-
-    .info-box {
-      background: var(--teal-light); border: 1px solid var(--teal-mid);
-      border-radius: 10px; padding: 14px 18px; margin-bottom: 24px;
-      font-size: 0.82rem; color: var(--slate); font-weight: 300; line-height: 1.6;
-    }
-    .info-box strong { color: var(--navy); font-weight: 600; }
-
-    .back-link { display: inline-block; margin-top: 20px; color: var(--slate); font-size: 0.85rem; text-decoration: underline; }
-    .back-link:hover { color: var(--navy); }
-
-    @media (max-width: 600px) {
-      .cart-item { flex-wrap: wrap; }
-      .btn-pay, .btn-pay-unavailable { width: 100%; text-align: center; }
+    @media (max-width: 768px) {
+      .checkout-layout { grid-template-columns: 1fr; }
+      .summary-sidebar { display: none; }
+      .summary-sidebar.mobile-open { display: block; position: static; }
+      .mobile-summary-toggle { display: flex; }
+      .form-row.two, .form-row.three { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -82,61 +254,425 @@
 
 <nav>
   <a href="index.html" class="logo">
-    <img src="Logo Rectangle.png" alt="NovaBuild" />
+    <img src="Logo Rectangle.png" alt="NovaBuild Robotics">
   </a>
 </nav>
 
-<div class="page">
-  <h1>Review & Pay</h1>
-  <p class="subtitle">Each item links to our secure Stripe payment page.</p>
+<div class="progress-bar">
+  <div class="progress-steps">
+    <div class="p-step active" id="p-step-1">
+      <div class="p-step-num">1</div><span>Contact & Shipping</span>
+    </div>
+    <div class="p-connector" id="p-con-1"></div>
+    <div class="p-step" id="p-step-2">
+      <div class="p-step-num">2</div><span>Payment</span>
+    </div>
+    <div class="p-connector" id="p-con-2"></div>
+    <div class="p-step" id="p-step-3">
+      <div class="p-step-num">3</div><span>Confirmation</span>
+    </div>
+  </div>
+</div>
 
-  <div class="info-box">
-    🔒 <strong>Secure checkout via Stripe.</strong> Your shipping address and card details are collected on Stripe's encrypted page. You'll receive an order confirmation email after payment.
+<div class="checkout-layout">
+  <div>
+    <button class="mobile-summary-toggle" onclick="toggleMobileSummary()">
+      <span>Order Summary</span>
+      <span class="toggle-price" id="mobile-total">AUD $0.00</span>
+    </button>
+    <div id="mobile-summary-panel" class="summary-sidebar" style="display:none;margin-bottom:16px;"></div>
+
+    <div class="form-panel">
+
+      <!-- STEP 1 -->
+      <div class="step-panel active" id="step-1">
+        <div class="form-section-title">Contact Information</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" placeholder="you@example.com" />
+            <span class="field-error" id="email-err">Please enter a valid email address</span>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" id="marketing" />
+            <label for="marketing">Email me with news and offers</label>
+          </div>
+        </div>
+        <div class="form-divider"></div>
+        <div class="form-section-title">Shipping Address</div>
+        <div class="form-grid">
+          <div class="form-row two">
+            <div class="form-field">
+              <label for="first">First name</label>
+              <input type="text" id="first" placeholder="Alex" />
+              <span class="field-error" id="first-err">Required</span>
+            </div>
+            <div class="form-field">
+              <label for="last">Last name</label>
+              <input type="text" id="last" placeholder="Johnson" />
+              <span class="field-error" id="last-err">Required</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="addr1">Address line 1</label>
+            <input type="text" id="addr1" placeholder="123 Builder Street" />
+            <span class="field-error" id="addr1-err">Required</span>
+          </div>
+          <div class="form-field">
+            <label for="addr2">Address line 2 <span style="font-weight:300;opacity:0.6">(optional)</span></label>
+            <input type="text" id="addr2" placeholder="Apartment, suite, etc." />
+          </div>
+          <div class="form-row three">
+            <div class="form-field">
+              <label for="city">City</label>
+              <input type="text" id="city" placeholder="Sydney" />
+              <span class="field-error" id="city-err">Required</span>
+            </div>
+            <div class="form-field">
+              <label for="state">State</label>
+              <select id="state">
+                <option value="">Select</option>
+                <option>ACT</option><option>NSW</option><option>NT</option>
+                <option>QLD</option><option>SA</option><option>TAS</option>
+                <option>VIC</option><option>WA</option>
+              </select>
+              <span class="field-error" id="state-err">Required</span>
+            </div>
+            <div class="form-field">
+              <label for="postcode">Postcode</label>
+              <input type="text" id="postcode" placeholder="2000" maxlength="4" />
+              <span class="field-error" id="postcode-err">4-digit postcode required</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Country</label>
+            <input type="text" value="Australia" disabled style="opacity:0.6;cursor:not-allowed" />
+          </div>
+          <div class="form-field">
+            <label for="phone">Phone <span style="font-weight:300;opacity:0.6">(optional)</span></label>
+            <input type="tel" id="phone" placeholder="+61 4XX XXX XXX" />
+          </div>
+        </div>
+        <div class="form-divider"></div>
+        <div class="form-section-title">Shipping Method</div>
+        <div class="shipping-methods">
+          <label class="shipping-opt selected" id="ship-std">
+            <input type="radio" name="shipping" value="0" checked onchange="selectShipping(this.closest('label'))" />
+            <div class="ship-label">
+              <div class="ship-name">Standard Shipping</div>
+              <div class="ship-days">7–14 business days</div>
+            </div>
+            <span id="std-ship-price" class="ship-price free">FREE</span>
+          </label>
+          <label class="shipping-opt" id="ship-exp">
+            <input type="radio" name="shipping" value="9.95" onchange="selectShipping(this.closest('label'))" />
+            <div class="ship-label">
+              <div class="ship-name">Express Shipping</div>
+              <div class="ship-days">2–5 business days</div>
+            </div>
+            <span class="ship-price">AUD $9.95</span>
+          </label>
+        </div>
+        <div class="step-ctas">
+          <button class="btn-step" onclick="goToStep2()">CONTINUE TO PAYMENT →</button>
+          <a href="cart.html" class="btn-back">← Return to cart</a>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="step-2">
+        <div class="form-section-title" style="padding-bottom:0">Payment</div>
+        <div id="payment-element">
+          <div class="stripe-loading">
+            <div class="stripe-spinner"></div>
+            Loading secure payment form…
+          </div>
+        </div>
+        <div class="error-bar" id="payment-error"></div>
+        <div class="security-note">
+          🔒 Your payment is processed securely by Stripe. Card details are encrypted and never stored on our servers.
+        </div>
+        <div class="step-ctas">
+          <button class="btn-step" id="place-order-btn" onclick="placeOrder()">
+            PLACE ORDER — AUD <span id="order-total-btn">$0.00</span> →
+          </button>
+          <button class="btn-back" onclick="goToStep1()">← Return to shipping</button>
+          <p class="step-legal">By placing your order you agree to our Terms &amp; Privacy Policy.</p>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-panel" id="step-3">
+        <div class="confirm-body">
+          <div class="confirm-check">✓</div>
+          <h2 class="confirm-title">ORDER CONFIRMED</h2>
+          <p class="confirm-sub" id="confirm-sub">Thanks! Your order is on its way.</p>
+          <div class="confirm-order-block">
+            <div class="confirm-order-meta">
+              <span class="confirm-order-num" id="confirm-order-num">NB-000000</span>
+              <span id="confirm-date"></span>
+            </div>
+            <div id="confirm-lines"></div>
+            <div class="confirm-summary">
+              <div class="confirm-summary-row"><span class="cr-lbl">Subtotal</span><span class="cr-val" id="confirm-sub-val">$0.00</span></div>
+              <div class="confirm-summary-row"><span class="cr-lbl">Shipping</span><span class="cr-val free" id="confirm-ship-val">FREE</span></div>
+              <div class="confirm-total"><span class="confirm-total-lbl">Total</span><span class="confirm-total-val" id="confirm-total-val">AUD $0.00</span></div>
+            </div>
+            <div class="confirm-address" id="confirm-address"></div>
+          </div>
+          <div class="what-next">
+            <h4>What happens next</h4>
+            <div class="next-step"><span class="ns-icon">📧</span><span class="ns-text">Confirmation emailed to <strong id="confirm-email-shown"></strong></span></div>
+            <div class="next-step"><span class="ns-icon">📦</span><span class="ns-text">Packed and dispatched within <strong>48 hours</strong></span></div>
+            <div class="next-step"><span class="ns-icon">🚚</span><span class="ns-text">Tracking number sent once shipped</span></div>
+          </div>
+          <div class="confirm-ctas">
+            <a href="index.html" class="confirm-cta-primary">CONTINUE SHOPPING →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <div id="items-container"></div>
-
-  <a href="cart.html" class="back-link">← Return to cart</a>
+  <div class="summary-sidebar" id="main-sidebar">
+    <div class="sidebar-title">Order Summary</div>
+    <div id="sidebar-items"></div>
+    <div class="sidebar-row" style="margin-top:14px"><span class="s-lbl">Subtotal</span><span class="s-val" id="sb-sub">$0.00</span></div>
+    <div class="sidebar-row"><span class="s-lbl">Shipping</span><span class="s-val free" id="sb-ship">FREE</span></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-total"><span class="sidebar-total-lbl">Total</span><span class="sidebar-total-val" id="sb-total">AUD $0.00</span></div>
+  </div>
 </div>
 
 <script src="products-config.js"></script>
 <script src="novabuild.js"></script>
 <script>
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51TcidTLzGjP8Vz14o1bavpBXBwvUckjMveS1KNio7GU7lpFgiAainhBaB7mQzFH2AqrCiIQVbf9zEjz43n4NQ5lY00mpLoyXz0';
+const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+let elements = null;
+let clientSecret = null;
+let currentStep = 1;
+let shippingCost = Cart.subtotal() >= 99 ? 0 : 9.95;
+
 document.addEventListener('DOMContentLoaded', () => {
-  const items = Cart.get();
-  const container = document.getElementById('items-container');
-
-  if (!items.length) {
-    container.innerHTML = `
-      <div class="empty">
-        <p style="font-size:1.1rem;margin-bottom:12px">Your cart is empty.</p>
-        <a href="index.html">← Continue shopping</a>
-      </div>`;
-    return;
+  const stdPriceEl = document.getElementById('std-ship-price');
+  if (shippingCost === 0) {
+    stdPriceEl.textContent = 'FREE'; stdPriceEl.classList.add('free');
+  } else {
+    stdPriceEl.textContent = 'AUD $9.95'; stdPriceEl.classList.remove('free');
   }
+  renderSidebar();
 
-  container.innerHTML = items.map(({ id, qty }) => {
-    const p = PRODUCTS[id];
-    if (!p) return '';
-    const total = (p.price * qty).toFixed(2);
+  const params = new URLSearchParams(window.location.search);
+  const returnSecret = params.get('payment_intent_client_secret');
+  if (returnSecret) {
+    stripe.retrievePaymentIntent(returnSecret).then(({ paymentIntent }) => {
+      if (paymentIntent.status === 'succeeded') showConfirmation();
+    });
+  }
+});
+
+function renderSidebar() {
+  const items = Cart.get();
+  const sub = Cart.subtotal();
+  const total = sub + shippingCost;
+  const shipLabel = shippingCost > 0 ? `AUD $${shippingCost.toFixed(2)}` : 'FREE';
+
+  const siHtml = items.map(({ id, qty }) => {
+    const p = PRODUCTS[id]; if (!p) return '';
     const thumb = PRODUCT_DETAILS?.[id]?.image
       ? `<img src="${PRODUCT_DETAILS[id].image}" alt="${p.name}">`
       : p.emoji;
-    const payBtn = p.paymentLink
-      ? `<a class="btn-pay" href="${p.paymentLink}" target="_blank">Pay A$${total} →</a>`
-      : `<span class="btn-pay-unavailable">Contact us</span>`;
     return `
-      <div class="cart-item">
-        <div class="item-thumb">${typeof thumb === 'string' && thumb.startsWith('<img') ? thumb : `<span>${thumb}</span>`}</div>
-        <div class="item-info">
-          <div class="item-name">${p.name}</div>
-          <div class="item-qty">Qty: ${qty}</div>
+      <div class="sidebar-item">
+        <div class="sidebar-thumb">${typeof thumb === 'string' && thumb.startsWith('<img') ? thumb : `<span style="font-size:1.2rem">${thumb}</span>`}</div>
+        <div style="flex:1">
+          <div class="sidebar-name">${p.name}</div>
+          <div class="sidebar-qty">Qty ${qty}</div>
         </div>
-        <div class="item-price">A$${total}</div>
-        ${payBtn}
+        <div class="sidebar-price">$${(p.price * qty).toFixed(2)}</div>
       </div>`;
   }).join('');
-});
+
+  document.getElementById('sidebar-items').innerHTML = siHtml;
+  document.getElementById('sb-sub').textContent = `$${sub.toFixed(2)}`;
+  document.getElementById('sb-ship').textContent = shipLabel;
+  document.getElementById('sb-total').textContent = `AUD $${total.toFixed(2)}`;
+  document.getElementById('order-total-btn').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('mobile-total').textContent = `AUD $${total.toFixed(2)}`;
+  document.getElementById('mobile-summary-panel').innerHTML = document.getElementById('main-sidebar').innerHTML;
+}
+
+function selectShipping(el) {
+  document.querySelectorAll('.shipping-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  shippingCost = parseFloat(el.querySelector('input').value) || 0;
+  renderSidebar();
+}
+
+function toggleMobileSummary() {
+  const p = document.getElementById('mobile-summary-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function showErr(id, errId, show) {
+  document.getElementById(id)?.classList.toggle('error', show);
+  document.getElementById(errId)?.classList.toggle('show', show);
+}
+
+function goToStep2() {
+  let valid = true;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('email').value.trim());
+  showErr('email', 'email-err', !emailOk); if (!emailOk) valid = false;
+  ['first','last','addr1','city'].forEach(f => {
+    const ok = document.getElementById(f).value.trim().length > 0;
+    showErr(f, f+'-err', !ok); if (!ok) valid = false;
+  });
+  const stateOk = document.getElementById('state').value.length > 0;
+  showErr('state', 'state-err', !stateOk); if (!stateOk) valid = false;
+  const pcOk = /^\d{4}$/.test(document.getElementById('postcode').value.trim());
+  showErr('postcode', 'postcode-err', !pcOk); if (!pcOk) valid = false;
+  if (!valid) { document.getElementById('step-1').scrollIntoView({ behavior: 'smooth' }); return; }
+  setStep(2);
+  initStripeElements();
+}
+
+function goToStep1() { setStep(1); }
+
+function setStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === n));
+  for (let i = 1; i <= 3; i++) {
+    const s = document.getElementById('p-step-' + i);
+    s.className = 'p-step' + (i < n ? ' done' : i === n ? ' active' : '');
+    s.querySelector('.p-step-num').textContent = i < n ? '✓' : i;
+  }
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('p-con-' + i).className = 'p-connector' + (i < n ? ' done' : '');
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function initStripeElements() {
+  if (elements) return;
+  const total = Cart.subtotal() + shippingCost;
+  const email = document.getElementById('email').value.trim();
+  const first = document.getElementById('first').value.trim();
+  const last  = document.getElementById('last').value.trim();
+
+  try {
+    const res = await fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amountAud:       total,
+        customerEmail:   email,
+        customerName:    `${first} ${last}`.trim(),
+        shippingAddress: `${document.getElementById('addr1').value.trim()}, ${document.getElementById('city').value.trim()} ${document.getElementById('state').value} ${document.getElementById('postcode').value.trim()}, Australia`,
+        items: Cart.get().map(({ id, qty }) => ({
+          id, qty, name: PRODUCTS[id]?.name || id, price: PRODUCTS[id]?.price || 0,
+        })),
+      }),
+    });
+
+    if (!res.ok) throw new Error((await res.json()).error || 'Server error');
+    const data = await res.json();
+    clientSecret = data.clientSecret;
+
+    elements = stripe.elements({
+      clientSecret,
+      appearance: {
+        theme: 'stripe',
+        variables: { colorPrimary: '#00C9C9', colorText: '#0D2030', colorDanger: '#E05555', fontFamily: 'Sora, sans-serif', borderRadius: '8px' },
+      },
+    });
+
+    const paymentEl = elements.create('payment', {
+      layout: 'tabs',
+      defaultValues: {
+        billingDetails: {
+          name: `${first} ${last}`, email,
+          address: { country: 'AU', city: document.getElementById('city').value.trim(), state: document.getElementById('state').value, postal_code: document.getElementById('postcode').value.trim(), line1: document.getElementById('addr1').value.trim() },
+        },
+      },
+    });
+    document.getElementById('payment-element').innerHTML = '';
+    paymentEl.mount('#payment-element');
+
+  } catch (err) {
+    document.getElementById('payment-element').innerHTML =
+      `<div style="padding:20px 28px;color:#E05555;font-size:0.85rem">⚠️ Could not load payment form: ${err.message}</div>`;
+    console.error(err);
+  }
+}
+
+async function placeOrder() {
+  const btn = document.getElementById('place-order-btn');
+  const errBar = document.getElementById('payment-error');
+  errBar.classList.remove('show');
+
+  if (!elements || !clientSecret) {
+    showPaymentError('Payment form is still loading. Please wait a moment.'); return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Processing…';
+
+  const { error, paymentIntent } = await stripe.confirmPayment({
+    elements,
+    confirmParams: {
+      return_url: `${window.location.origin}/checkout.html`,
+      payment_method_data: {
+        billing_details: {
+          name: `${document.getElementById('first').value.trim()} ${document.getElementById('last').value.trim()}`,
+          email: document.getElementById('email').value.trim(),
+          address: { line1: document.getElementById('addr1').value.trim(), city: document.getElementById('city').value.trim(), state: document.getElementById('state').value, postal_code: document.getElementById('postcode').value.trim(), country: 'AU' },
+        },
+      },
+    },
+    redirect: 'if_required',
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = 'PLACE ORDER — AUD <span id="order-total-btn">$' + (Cart.subtotal() + shippingCost).toFixed(2) + '</span> →';
+
+  if (error) {
+    showPaymentError(error.message);
+  } else if (paymentIntent?.status === 'succeeded') {
+    showConfirmation();
+  }
+}
+
+function showPaymentError(msg) {
+  const bar = document.getElementById('payment-error');
+  bar.innerHTML = `⚠️ ${msg}`;
+  bar.classList.add('show');
+  bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showConfirmation() {
+  const items = Cart.get();
+  const sub = Cart.subtotal();
+  const total = sub + shippingCost;
+  const first = document.getElementById('first').value.trim();
+  const email = document.getElementById('email').value.trim();
+
+  document.getElementById('confirm-order-num').textContent = 'NB-' + Math.floor(100000 + Math.random() * 900000);
+  document.getElementById('confirm-date').textContent = new Date().toLocaleDateString('en-AU', { day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('confirm-sub').textContent = `Thanks ${first}! Your order is on its way.`;
+  document.getElementById('confirm-email-shown').textContent = email;
+  document.getElementById('confirm-sub-val').textContent = `$${sub.toFixed(2)}`;
+  document.getElementById('confirm-ship-val').textContent = shippingCost > 0 ? `AUD $${shippingCost.toFixed(2)}` : 'FREE';
+  document.getElementById('confirm-total-val').textContent = `AUD $${total.toFixed(2)}`;
+  document.getElementById('confirm-address').innerHTML = `<strong>Shipping to:</strong> ${document.getElementById('addr1').value.trim()}, ${document.getElementById('city').value.trim()} ${document.getElementById('state').value} ${document.getElementById('postcode').value.trim()}, Australia`;
+  document.getElementById('confirm-lines').innerHTML = items.map(({ id, qty }) => {
+    const p = PRODUCTS[id]; if (!p) return '';
+    return `<div class="confirm-line"><span><span class="cl-name">${p.name}</span> <span class="cl-qty">×${qty}</span></span><span class="cl-price">$${(p.price * qty).toFixed(2)}</span></div>`;
+  }).join('');
+
+  Cart.clear();
+  setStep(3);
+}
 </script>
 </body>
 </html>
